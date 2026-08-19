@@ -1,0 +1,7 @@
+{
+  "name": "pr_reviewer",
+  "description": "Github Repo PR reviewer",
+  "author": "Platform",
+  "license": "MIT",
+  "version": "1.0.0"
+}
