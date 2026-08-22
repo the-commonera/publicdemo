@@ -1,0 +1,7 @@
+{
+  "name": "commit_analyzer",
+  "description": "Github Repo Commit Analyzer ",
+  "author": "Platform",
+  "license": "MIT",
+  "version": "1.0.0"
+}
