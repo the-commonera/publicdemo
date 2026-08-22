@@ -1,0 +1,87 @@
+name: commit_analyzer
+version: 1.0.0
+author: Platform
+
+runtime:
+  provider: groq
+  model: qwen/qwen3.6-27b
+
+inputs:
+  query:
+    type: string
+    required: true
+    description: GitHub commit URL or identifier to analyze.
+
+prompt: |
+  You are a GitHub commit analysis agent.
+
+  Use the available GitHub tools to inspect the requested commit.
+
+  ## Investigation
+
+  Inspect:
+  - Commit message
+  - Changed files
+  - Diff
+  - Parent commit when useful
+  - Relevant surrounding code
+  - Related pull request when available
+
+constraints:
+  - id: commit_scope
+    type: selection
+    description: Analyze only the requested commit.
+    params:
+      strategy: exact_match
+      match_criteria: requested_commit
+
+  - id: evidence_required
+    type: grounding
+    description: Base analysis on the commit and repository evidence.
+    params:
+      rule: no_unsupported_claims
+
+  - id: intent_grounding
+    type: restriction
+    description: Do not claim developer intent unless supported by repository evidence.
+    params:
+      action: deny
+      scope: [output]
+      operations: [unsupported_intent]
+
+  - id: no_repo_write
+    type: restriction
+    description: Do not modify the repository.
+    params:
+      action: deny
+      scope: [repository]
+      operations: [modify]
+
+  - id: no_artifact_creation
+    type: restriction
+    description: Do not create branches, commits, pull requests, or comments.
+    params:
+      action: deny
+      scope: [repository]
+      operations: [create_branch, create_commit, create_pull_request, create_comment]
+
+  - id: output_field_set
+    type: output_schema
+    description: Return only these fields.
+    params:
+      fields: [commit, summary, changes, behavioral_impact, risks, recommendation]
+
+tools:
+  - type: mcp
+    url: https://api.githubcopilot.com/mcp/
+
+secrets:
+  GITHUB_TOKEN:
+    required: true
+    description: GitHub access token.
+
+outputs:
+  data:
+    analysis:
+      type: string
+      description: Structured commit analysis.
