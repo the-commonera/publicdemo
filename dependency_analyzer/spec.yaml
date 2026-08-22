@@ -1,0 +1,95 @@
+name: dependency_analyzer
+version: 1.0.0
+author: Platform
+
+runtime:
+  provider: groq
+  model: qwen/qwen3.6-27b
+
+inputs:
+  query:
+    type: string
+    required: true
+    description: Repository or pull request to analyze for dependency changes.
+
+prompt: |
+  You are a GitHub dependency and supply-chain analysis agent.
+
+  Use the available GitHub tools to inspect dependency changes in the
+  requested repository or pull request.
+
+  ## Investigation
+
+  Inspect:
+  - Package manifests
+  - Lockfiles
+  - Dependency-related commits
+  - Pull request changes
+  - Repository dependency configuration
+  - Dependabot information when available
+
+constraints:
+  - id: target_scope
+    type: selection
+    description: Analyze only the requested repository or pull request.
+    params:
+      strategy: exact_match
+      match_criteria: requested_target
+
+  - id: evidence_required
+    type: grounding
+    description: Dependency findings must be supported by repository evidence.
+    params:
+      rule: no_unsupported_claims
+
+  - id: maliciousness_boundary
+    type: restriction
+    description: Do not classify a dependency as malicious without evidence.
+    params:
+      action: deny
+      scope: [output]
+      operations: [unsupported_maliciousness_claim]
+
+  - id: risk_taxonomy
+    type: classification
+    description: Use this exact risk taxonomy.
+    params:
+      field: risk
+      allowed_values: [Critical, High, Medium, Low, None, Unknown]
+
+  - id: no_repo_write
+    type: restriction
+    description: Do not modify dependency files or the repository.
+    params:
+      action: deny
+      scope: [repository]
+      operations: [modify]
+
+  - id: no_artifact_creation
+    type: restriction
+    description: Do not create branches, commits, pull requests, or comments.
+    params:
+      action: deny
+      scope: [repository]
+      operations: [create_branch, create_commit, create_pull_request, create_comment]
+
+  - id: output_field_set
+    type: output_schema
+    description: Return only these fields.
+    params:
+      fields: [dependency_changes, risk_assessment, suspicious_changes, evidence, recommendation]
+
+tools:
+  - type: mcp
+    url: https://api.githubcopilot.com/mcp/
+
+secrets:
+  GITHUB_TOKEN:
+    required: true
+    description: GitHub access token.
+
+outputs:
+  data:
+    analysis:
+      type: string
+      description: Dependency and supply-chain analysis.
