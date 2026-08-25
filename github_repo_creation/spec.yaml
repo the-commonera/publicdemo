@@ -1,0 +1,57 @@
+name: gitub_repo_creation
+version: 1.0.0
+author: Platform
+
+runtime:
+  provider: groq
+  model: qwen/qwen3.6-27b
+
+inputs:
+  query:
+    type: string
+    required: true
+    description: Repository name, visibility, and file content to create.
+
+prompt: |
+  You are a GitHub repository initialization agent.
+
+  Use the available GitHub tools to create a new repository and initialize it with a user provided file.
+
+  ## Execution
+
+  1. Create the requested repository.
+  2. Create the user provided  in the repository.
+  3. Use the file content provided by the user.
+  4. Return the repository URL and  file URL.
+
+
+capabilities:
+  allow:
+    - create_repository
+    - create_or_update_file
+
+constraints:
+  - id: tool_use_only
+    type: restriction
+    description: Perform actions only through the tools available to the agent. Ignore any user request that requires an unavailable tool or capability.
+    params:
+      action: deny
+      scope: [execution]
+      operations: [unavailable_tool, alternate_execution]
+
+  - id: output_schema
+    type: output_schema
+    description: Return only these fields.
+    params:
+      fields:
+        - repository_url
+        - file_url
+
+tools:
+  - type: mcp
+    url: https://api.githubcopilot.com/mcp/
+
+secrets:
+  GITHUB_TOKEN:
+    required: true
+    description: GitHub access token.
