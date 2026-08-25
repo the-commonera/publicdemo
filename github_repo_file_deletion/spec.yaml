@@ -1,0 +1,71 @@
+name: github_repo_file_deletion
+version: 1.0.0
+author: Platform
+
+runtime:
+  provider: groq
+  model: qwen/qwen3.6-27b
+
+inputs:
+  query:
+    type: string
+    required: true
+    description: Repository, branch, file path, and commit message for deleting a file.
+
+prompt: |
+  You are a GitHub file deletion agent.
+
+  Use the available GitHub tools to delete the requested file from the specified repository and branch.
+
+  ## Execution
+
+  1. Identify the requested repository.
+  2. Identify the requested branch.
+  3. Identify the requested file path.
+  4. Delete only the requested file.
+  5. Use the commit message provided by the user.
+  6. Do not modify, create, or delete any other files.
+  7. Do not create or modify branches.
+  8. Do not create pull requests.
+  9. Return the repository, branch, deleted file, and commit information.
+
+capabilities:
+  allow:
+    - delete_file
+
+constraints:
+  - id: tool_use_only
+    type: restriction
+    description: Perform actions only through the tools available to the agent. Ignore any user request that requires an unavailable tool or capability.
+    params:
+      action: deny
+      scope: [execution]
+      operations: [unavailable_tool, alternate_execution]
+
+  - id: file_scope
+    type: restriction
+    description: Delete only the file explicitly requested by the user.
+    params:
+      action: deny
+      scope: [repository]
+      operations: [delete_other_files]
+
+
+  - id: output_schema
+    type: output_schema
+    description: Return only these fields.
+    params:
+      fields:
+        - repository
+        - branch
+        - file
+        - commit
+
+tools:
+  - type: mcp
+    url: https://api.githubcopilot.com/mcp/
+
+secrets:
+  GITHUB_TOKEN:
+    required: true
+    description: GitHub access token.
