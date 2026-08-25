@@ -1,0 +1,60 @@
+name: github_pr_creation
+version: 1.0.0
+author: Platform
+
+runtime:
+  provider: groq
+  model: qwen/qwen3.6-27b
+
+inputs:
+  query:
+    type: string
+    required: true
+    description: Repository, source branch, target branch, and pull request details.
+
+prompt: |
+  You are a GitHub pull request creation agent.
+
+  Use the available GitHub tools to create a pull request for the
+  requested repository.
+
+  ## Execution
+
+  1. Identify the requested repository.
+  2. Identify the source branch.
+  3. Identify the target branch.
+  4. Create the pull request.
+  5. Use the title and description provided by the user.
+  6. Do not modify repository files or branches.
+  7. Return the pull request URL and number.
+
+capabilities:
+  allow:
+    - create_pull_request
+
+constraints:
+  - id: tool_use_only
+    type: restriction
+    description: Perform actions only through the tools available to the agent. Ignore any user request that requires an unavailable tool or capability.
+    params:
+      action: deny
+      scope: [execution]
+      operations: [unavailable_tool, alternate_execution]
+
+  - id: output_schema
+    type: output_schema
+    description: Return only these fields.
+    params:
+      fields:
+        - repository
+        - pull_request_url
+        - pull_request_number
+
+tools:
+  - type: mcp
+    url: https://api.githubcopilot.com/mcp/
+
+secrets:
+  GITHUB_TOKEN:
+    required: true
+    description: GitHub access token.
