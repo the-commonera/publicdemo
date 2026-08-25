@@ -1,0 +1,7 @@
+{
+  "name": "github_repo_pr_create",
+  "description": "Github Repo PR",
+  "author": "Platform",
+  "license": "MIT",
+  "version": "1.0.0"
+}
