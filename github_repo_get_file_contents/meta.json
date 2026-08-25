@@ -1,0 +1,7 @@
+{
+  "name": "github_repo_get_file_contents",
+  "description": "Github Repo get file contents",
+  "author": "Platform",
+  "license": "MIT",
+  "version": "1.0.0"
+}
